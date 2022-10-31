@@ -4,24 +4,20 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/gin-gonic/gin"
 	"github.com/qingwave/weave/pkg/authentication"
 	"github.com/qingwave/weave/pkg/authentication/oauth"
 	"github.com/qingwave/weave/pkg/common"
 	"github.com/qingwave/weave/pkg/model"
-	"github.com/qingwave/weave/pkg/service"
-
-	"github.com/gin-gonic/gin"
 )
 
 type AuthController struct {
-	userService service.UserService
 	jwtService  *authentication.JWTService
 	oauthManger *oauth.OAuthManager
 }
 
-func NewAuthController(userService service.UserService, jwtService *authentication.JWTService, oauthManager *oauth.OAuthManager) Controller {
+func NewAuthController(jwtService *authentication.JWTService, oauthManager *oauth.OAuthManager) Controller {
 	return &AuthController{
-		userService: userService,
 		jwtService:  jwtService,
 		oauthManger: oauthManager,
 	}
@@ -42,10 +38,9 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	user, err := ac.userService.Auth(auser)
-	if err != nil {
-		common.ResponseFailed(c, http.StatusUnauthorized, err)
-		return
+	user := &model.User{
+		ID:   1,
+		Name: auser.Name,
 	}
 
 	token, err := ac.jwtService.CreateToken(user)
@@ -75,52 +70,8 @@ func (ac *AuthController) Login(c *gin.Context) {
 	})
 }
 
-// @Summary Logout
-// @Description User logout
-// @Produce json
-// @Tags auth
-// @Success 200 {object} common.Response
-// @Router /api/v1/auth/token [delete]
-func (ac *AuthController) Logout(c *gin.Context) {
-	c.SetCookie(common.CookieTokenName, "", -1, "/", "", true, true)
-	c.SetCookie(common.CookieLoginUser, "", -1, "/", "", true, false)
-	common.ResponseSuccess(c, nil)
-}
-
-// @Summary Register user
-// @Description Create user and storage
-// @Accept json
-// @Produce json
-// @Tags auth
-// @Param user body model.CreatedUser true "user info"
-// @Success 200 {object} common.Response{data=model.User}
-// @Router /api/v1/auth/user [post]
-func (ac *AuthController) Register(c *gin.Context) {
-	createdUser := new(model.CreatedUser)
-	if err := c.BindJSON(createdUser); err != nil {
-		common.ResponseFailed(c, http.StatusBadRequest, err)
-		return
-	}
-
-	user := createdUser.GetUser()
-	if err := ac.userService.Validate(user); err != nil {
-		common.ResponseFailed(c, http.StatusBadRequest, err)
-		return
-	}
-
-	ac.userService.Default(user)
-	user, err := ac.userService.Create(user)
-	if err != nil {
-		common.ResponseFailed(c, http.StatusInternalServerError, err)
-	}
-
-	common.ResponseSuccess(c, user)
-}
-
 func (ac *AuthController) RegisterRoute(api *gin.RouterGroup) {
 	api.POST("/auth/token", ac.Login)
-	api.DELETE("/auth/token", ac.Logout)
-	api.POST("/auth/user", ac.Register)
 }
 
 func (ac *AuthController) Name() string {

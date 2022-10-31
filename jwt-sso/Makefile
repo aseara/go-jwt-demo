@@ -38,8 +38,7 @@ fmt:
 swagger:
 	swag init
 
-init: install-swagger postgres redis
-	# git config core.hooksPath .githooks
+init: install-swagger
 	echo "init all"
 
 install-swagger:
