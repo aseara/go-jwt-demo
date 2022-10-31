@@ -134,7 +134,7 @@ const login = async (form) => {
         })
     // router.push('/');
     // router.go("https://grafana.mh3cloud.cn/login")
-    window.location.href = "https://grafana.mh3cloud.cn/login";
+    window.location.href = "http://grafana.mh3cloud.cn/login";
   }
 
   if (anonymousLogin.value) {

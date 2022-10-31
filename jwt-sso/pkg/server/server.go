@@ -11,9 +11,7 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	_ "github.com/qingwave/weave/docs"
 	"github.com/qingwave/weave/pkg/authentication"
-	"github.com/qingwave/weave/pkg/authentication/oauth"
 	"github.com/qingwave/weave/pkg/common"
 	"github.com/qingwave/weave/pkg/config"
 	"github.com/qingwave/weave/pkg/controller"
@@ -25,9 +23,8 @@ import (
 
 func New(conf *config.Config, logger *logrus.Logger) (*Server, error) {
 	jwtService := authentication.NewJWTService(conf.Server.JWTSecret)
-	oauthManager := oauth.NewOAuthManager(conf.OAuthConfig)
 
-	authController := controller.NewAuthController(jwtService, oauthManager)
+	authController := controller.NewAuthController(jwtService)
 	controllers := []controller.Controller{authController}
 
 	gin.SetMode(conf.Server.ENV)
@@ -35,11 +32,9 @@ func New(conf *config.Config, logger *logrus.Logger) (*Server, error) {
 	e := gin.New()
 	e.Use(
 		gin.Recovery(),
-		middleware.MonitorMiddleware(),
 		middleware.CORSMiddleware(),
 		middleware.RequestInfoMiddleware(&request.RequestInfoFactory{APIPrefixes: set.NewString("api")}),
 		middleware.LogMiddleware(logger, "/"),
-		middleware.TraceMiddleware(),
 	)
 
 	e.LoadHTMLFiles("static/terminal.html")

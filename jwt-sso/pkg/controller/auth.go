@@ -6,24 +6,21 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/qingwave/weave/pkg/authentication"
-	"github.com/qingwave/weave/pkg/authentication/oauth"
 	"github.com/qingwave/weave/pkg/common"
 	"github.com/qingwave/weave/pkg/model"
 )
 
 type AuthController struct {
-	jwtService  *authentication.JWTService
-	oauthManger *oauth.OAuthManager
+	jwtService *authentication.JWTService
 }
 
-func NewAuthController(jwtService *authentication.JWTService, oauthManager *oauth.OAuthManager) Controller {
+func NewAuthController(jwtService *authentication.JWTService) Controller {
 	return &AuthController{
-		jwtService:  jwtService,
-		oauthManger: oauthManager,
+		jwtService: jwtService,
 	}
 }
 
-// @Summary Login
+// Login @Summary Login
 // @Description User login
 // @Accept json
 // @Produce json
@@ -32,15 +29,15 @@ func NewAuthController(jwtService *authentication.JWTService, oauthManager *oaut
 // @Success 200 {object} common.Response{data=model.JWTToken}
 // @Router /api/v1/auth/token [post]
 func (ac *AuthController) Login(c *gin.Context) {
-	auser := new(model.AuthUser)
-	if err := c.BindJSON(auser); err != nil {
+	au := new(model.AuthUser)
+	if err := c.BindJSON(au); err != nil {
 		common.ResponseFailed(c, http.StatusBadRequest, err)
 		return
 	}
 
 	user := &model.User{
 		ID:   1,
-		Name: auser.Name,
+		Name: au.Name,
 	}
 
 	token, err := ac.jwtService.CreateToken(user)
@@ -55,13 +52,13 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	if auser.SetCookie {
-		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "", true, true)
-		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "", true, false)
+	if au.SetCookie {
+		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", false, true)
+		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", false, false)
 	}
 
-	if auser.ReturnUrl == "" {
-		auser.ReturnUrl = "https://jwt-prometheus.mh3cloud.cn"
+	if au.ReturnUrl == "" {
+		au.ReturnUrl = "https://jwt-prometheus.mh3cloud.cn"
 	}
 
 	common.ResponseSuccess(c, model.JWTToken{
@@ -70,8 +67,21 @@ func (ac *AuthController) Login(c *gin.Context) {
 	})
 }
 
+// Logout @Summary Logout
+// @Description User logout
+// @Produce json
+// @Tags auth
+// @Success 200 {object} common.Response
+// @Router /api/v1/auth/token [delete]
+func (ac *AuthController) Logout(c *gin.Context) {
+	c.SetCookie(common.CookieTokenName, "", -1, "/", "mh3cloud.cn", false, true)
+	c.SetCookie(common.CookieLoginUser, "", -1, "/", "mh3cloud.cn", false, false)
+	common.ResponseSuccess(c, nil)
+}
+
 func (ac *AuthController) RegisterRoute(api *gin.RouterGroup) {
 	api.POST("/auth/token", ac.Login)
+	api.DELETE("/auth/token", ac.Logout)
 }
 
 func (ac *AuthController) Name() string {

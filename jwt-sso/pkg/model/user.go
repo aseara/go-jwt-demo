@@ -5,12 +5,6 @@ import (
 	"time"
 )
 
-const (
-	UserAssociation         = "Users"
-	UserAuthInfoAssociation = "AuthInfos"
-	GroupAssociation        = "Groups"
-)
-
 type User struct {
 	ID        uint       `json:"id" gorm:"autoIncrement;primaryKey"`
 	Name      string     `json:"name" gorm:"size:100;not null;unique"`

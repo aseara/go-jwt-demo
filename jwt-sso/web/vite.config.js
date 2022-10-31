@@ -42,7 +42,7 @@ export default defineConfig({
   server: {
     // if your frontend not in the localhost, please uncomment the https config meanwhile
     host: "127.0.0.1",
-    port: 8081,
+    port: 80,
     // https: {
     //   ca: fs.readFileSync('../certs/root.crt'),
     //   key: fs.readFileSync('../certs/frontend.key'),

@@ -3,8 +3,6 @@ package config
 import (
 	"os"
 
-	"github.com/qingwave/weave/pkg/utils/ratelimit"
-
 	"gopkg.in/yaml.v2"
 )
 
@@ -18,12 +16,11 @@ type Config struct {
 }
 
 type ServerConfig struct {
-	ENV                    string                  `yaml:"env"`
-	Address                string                  `yaml:"address"`
-	Port                   int                     `yaml:"port"`
-	GracefulShutdownPeriod int                     `yaml:"gracefulShutdownPeriod"`
-	LimitConfigs           []ratelimit.LimitConfig `yaml:"rateLimits"`
-	JWTSecret              string                  `yaml:"jwtSecret"`
+	ENV                    string `yaml:"env"`
+	Address                string `yaml:"address"`
+	Port                   int    `yaml:"port"`
+	GracefulShutdownPeriod int    `yaml:"gracefulShutdownPeriod"`
+	JWTSecret              string `yaml:"jwtSecret"`
 }
 
 type DBConfig struct {
@@ -65,7 +62,9 @@ func Parse(appConfig string) (*Config, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer file.Close()
+	defer func() {
+		_ = file.Close()
+	}()
 
 	if err := yaml.NewDecoder(file).Decode(&config); err != nil {
 		return nil, err
