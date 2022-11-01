@@ -14,7 +14,7 @@ type AuthController struct {
 	jwtService *authentication.JWTService
 }
 
-func NewAuthController(jwtService *authentication.JWTService) Controller {
+func NewAuthController(jwtService *authentication.JWTService) *AuthController {
 	return &AuthController{
 		jwtService: jwtService,
 	}
@@ -29,10 +29,11 @@ func NewAuthController(jwtService *authentication.JWTService) Controller {
 // @Success 200 {object} common.Response{data=model.JWTToken}
 // @Router /api/v1/auth/token [post]
 func (ac *AuthController) GetToken(c *gin.Context) {
-	au := new(model.AuthUser)
-	if err := c.BindQuery(au); err != nil {
-		common.ResponseFailed(c, http.StatusBadRequest, err)
-		return
+	au := &model.AuthUser{
+		Name:      "admin",
+		Password:  "password",
+		SetCookie: true,
+		ReturnUrl: "https://grafana.mh3cloud.cn/login",
 	}
 
 	user := &model.User{
@@ -57,11 +58,7 @@ func (ac *AuthController) GetToken(c *gin.Context) {
 		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", true, false)
 	}
 
-	common.ResponseSuccess(c, model.JWTToken{
-		Token:    token,
-		Url:      au.ReturnUrl,
-		Describe: "set token in Authorization Header, [Authorization: Bearer {token}]",
-	})
+	c.Redirect(301, au.ReturnUrl)
 }
 
 // Login @Summary Login
@@ -121,7 +118,6 @@ func (ac *AuthController) Logout(c *gin.Context) {
 }
 
 func (ac *AuthController) RegisterRoute(api *gin.RouterGroup) {
-	api.GET("/auth/token", ac.GetToken)
 	api.POST("/auth/token", ac.Login)
 	api.DELETE("/auth/token", ac.Logout)
 }

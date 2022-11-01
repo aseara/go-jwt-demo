@@ -12,7 +12,6 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/qingwave/weave/pkg/authentication"
-	"github.com/qingwave/weave/pkg/common"
 	"github.com/qingwave/weave/pkg/config"
 	"github.com/qingwave/weave/pkg/controller"
 	"github.com/qingwave/weave/pkg/middleware"
@@ -25,8 +24,6 @@ func New(conf *config.Config, logger *logrus.Logger) (*Server, error) {
 	jwtService := authentication.NewJWTService(conf.Server.JWTSecret)
 
 	authController := controller.NewAuthController(jwtService)
-	controllers := []controller.Controller{authController}
-
 	gin.SetMode(conf.Server.ENV)
 
 	e := gin.New()
@@ -40,10 +37,10 @@ func New(conf *config.Config, logger *logrus.Logger) (*Server, error) {
 	e.LoadHTMLFiles("static/terminal.html")
 
 	return &Server{
-		engine:      e,
-		config:      conf,
-		logger:      logger,
-		controllers: controllers,
+		engine: e,
+		config: conf,
+		logger: logger,
+		auth:   authController,
 	}, nil
 }
 
@@ -52,7 +49,7 @@ type Server struct {
 	config *config.Config
 	logger *logrus.Logger
 
-	controllers []controller.Controller
+	auth *controller.AuthController
 }
 
 // Run graceful shutdown
@@ -94,15 +91,13 @@ func (s *Server) initRouter() {
 	root := s.engine
 
 	// register non-resource routers
-	root.GET("/", common.WrapFunc(s.getRoutes))
 	root.GET("/index", controller.Index)
+	root.GET("/api/v1/auth/token", s.auth.GetToken)
 
 	api := root.Group("/api/v1")
-	controllers := make([]string, 0, len(s.controllers))
-	for _, router := range s.controllers {
-		router.RegisterRoute(api)
-		controllers = append(controllers, router.Name())
-	}
+	controllers := make([]string, 0, 1)
+	s.auth.RegisterRoute(api)
+	controllers = append(controllers, s.auth.Name())
 	logrus.Infof("server enabled controllers: %v", controllers)
 }
 
