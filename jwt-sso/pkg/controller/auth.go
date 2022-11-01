@@ -20,6 +20,50 @@ func NewAuthController(jwtService *authentication.JWTService) Controller {
 	}
 }
 
+// GetToken @Summary Login
+// @Description User login
+// @Accept json
+// @Produce json
+// @Tags auth
+// @Param user body model.AuthUser true "auth user info"
+// @Success 200 {object} common.Response{data=model.JWTToken}
+// @Router /api/v1/auth/token [post]
+func (ac *AuthController) GetToken(c *gin.Context) {
+	au := new(model.AuthUser)
+	if err := c.BindQuery(au); err != nil {
+		common.ResponseFailed(c, http.StatusBadRequest, err)
+		return
+	}
+
+	user := &model.User{
+		ID:   1,
+		Name: au.Name,
+	}
+
+	token, err := ac.jwtService.CreateToken(user)
+	if err != nil {
+		common.ResponseFailed(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	userJson, err := json.Marshal(user)
+	if err != nil {
+		common.ResponseFailed(c, http.StatusInternalServerError, err)
+		return
+	}
+
+	if au.SetCookie {
+		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", true, true)
+		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", true, false)
+	}
+
+	common.ResponseSuccess(c, model.JWTToken{
+		Token:    token,
+		Url:      au.ReturnUrl,
+		Describe: "set token in Authorization Header, [Authorization: Bearer {token}]",
+	})
+}
+
 // Login @Summary Login
 // @Description User login
 // @Accept json
@@ -53,16 +97,13 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	if au.SetCookie {
-		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", false, true)
-		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", false, false)
-	}
-
-	if au.ReturnUrl == "" {
-		au.ReturnUrl = "https://jwt-prometheus.mh3cloud.cn"
+		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", true, true)
+		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", true, false)
 	}
 
 	common.ResponseSuccess(c, model.JWTToken{
 		Token:    token,
+		Url:      au.ReturnUrl,
 		Describe: "set token in Authorization Header, [Authorization: Bearer {token}]",
 	})
 }
@@ -80,6 +121,7 @@ func (ac *AuthController) Logout(c *gin.Context) {
 }
 
 func (ac *AuthController) RegisterRoute(api *gin.RouterGroup) {
+	api.GET("/auth/token", ac.GetToken)
 	api.POST("/auth/token", ac.Login)
 	api.DELETE("/auth/token", ac.Logout)
 }

@@ -4,7 +4,7 @@
       <div class="h-max min-w-[16rem] w-1/4 max-w-[24rem] text-center items-center">
         <div class="inline-flex mt-4 mb-8 items-center">
           <img src="@/assets/weave.png" class="h-12 mr-2" />
-          <h1 class="font-bold text-4xl font-mono">Weave</h1>
+          <h1 class="font-bold text-4xl font-mono">JWT-demo</h1>
         </div>
 
         <div v-if="showLogin">
@@ -24,24 +24,17 @@
                   </template>
                 </el-input>
               </el-form-item>
+
+              <el-form-item prop="redirectUrl">
+                <el-input v-model="loginUser.redirectUrl" placeholder="http://grafana4444.mh3cloud.cn/login">
+                  <template #prefix>
+                    <Lock />
+                  </template>
+                </el-input>
+              </el-form-item>
             </el-form>
 
             <el-button class="w-full" type="primary" size="large" @click="login(loginFormRef)">SIGN IN</el-button>
-            <div class="w-full flex mt-[0.25rem]">
-              <el-checkbox class="w-1/2" v-model="anonymousLogin" label="Anonymous Login" size="large" />
-              <div class="w-1/2 text-right">
-                <el-button link @click="showLogin=false">SIGN UP</el-button>
-              </div>
-            </div>
-            
-            <div class="my-[0.5rem]">
-              <el-button link @click="oauthLogin('github')">
-                <Github theme="outline" size="30" fill="#333" />
-              </el-button>
-              <el-button link @click="oauthLogin('wechat')">
-                <Wechat theme="filled" size="30" fill="#7ed321" />
-              </el-button>
-            </div>
         </div>
 
           <div v-if="showLogin == false">
@@ -83,7 +76,6 @@ import { User, Lock, Github, Wechat } from '@icon-park/vue-next'
 import { ref, reactive } from 'vue'
 import request from '@/axios'
 import { useRouter } from 'vue-router'
-import { redirectUri, authInfo } from '@/config.js'
 import { setAnonymous } from '@/utils'
 
 const router = useRouter();
@@ -98,10 +90,13 @@ const anonymousLogin = ref(false);
 const loginUser = reactive({
   name: "admin",
   password: "123456",
+  redirectUrl: "http://grafana5555.mh3cloud.cn/login/"
 });
+
 const registerUser = reactive({
   name: "",
   email: "",
+  redirectUri: "",
   password: "",
 });
 const rules = reactive({
@@ -111,6 +106,9 @@ const rules = reactive({
   password: [
     { required: true, message: 'Please input password', trigger: 'blur' },
     { min: 6, message: 'Length should be great than 6', trigger: 'blur' }
+  ],
+  redirectUrl: [
+    { required: true, message: 'Please input redirectUrl', trigger: 'blur' }
   ],
   email: [
     { required: true, message: 'Please input email', trigger: 'blur' },
@@ -125,7 +123,7 @@ const login = async (form) => {
 
   let name = loginUser.name;
 
-  let success = function() {
+  let success = function(data) {
     ElNotification.success({
           title: 'Login Success',
           message: 'Hi~ ' + name,
@@ -134,7 +132,7 @@ const login = async (form) => {
         })
     // router.push('/');
     // router.go("https://grafana.mh3cloud.cn/login")
-    window.location.href = "http://grafana.mh3cloud.cn/login";
+    window.location.href = data.data.url;
   }
 
   if (anonymousLogin.value) {
@@ -149,9 +147,10 @@ const login = async (form) => {
       request.post("/api/v1/auth/token", {
         name: loginUser.name,
         password: loginUser.password,
+        returnUrl: loginUser.redirectUrl,
         setCookie: true,
       }).then((response) => {
-        success()
+        success(response.data)
       })
     } else {
       console.log("input invaild", fields)
@@ -161,34 +160,6 @@ const login = async (form) => {
       });
     }
   });
-};
-
-const oauthLogin = (authType) => {
-  if (!authInfo[authType]) {
-    return
-  }
-
-  let uri = "";
-  const endpoint = authInfo[authType].endpoint;
-  const scope = authInfo[authType].scope;
-  const clientId = authInfo[authType].clientId;
-  const state = btoa(`${window.location.search}&app=weave&oauth=${authType}`)
-
-  if (authType === "google") {
-    uri = `${endpoint}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${state}`;
-  } else if (authType === "github") {
-    uri = `${endpoint}?client_id=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${state}`;
-  } else if (authType === "wechat") {
-    if (navigator.userAgent.includes("MicroMessenger")) {
-      uri = `${authInfo[authType].mpEndpoint}?appid=${authInfo[authType].clientId2}&redirect_uri=${redirectUri}&state=${state}&scope=${authInfo[authType].mpScope}&response_type=code#wechat_redirect`;
-    } else {
-      uri = `${endpoint}?appid=${clientId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code&state=${state}#wechat_redirect`;
-    }
-  } else {
-    console.log(`auth type ${authType} not supported`)
-    return
-  }
-  window.location.href = uri;
 };
 
 const register = async (form) => {
