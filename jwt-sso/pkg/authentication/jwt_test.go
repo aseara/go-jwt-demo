@@ -9,7 +9,7 @@ import (
 )
 
 func TestCreateToken(t *testing.T) {
-	service := NewJWTService("test")
+	service := NewJWTService("../../test")
 
 	testCases := []struct {
 		name        string
@@ -68,7 +68,7 @@ func TestParseToken(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			service := NewJWTService("test")
+			service := NewJWTService("../../test")
 			if tc.expiresAt != 0 {
 				service.expireDuration = tc.expiresAt
 			}
