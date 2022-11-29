@@ -20,7 +20,7 @@ type ServerConfig struct {
 	Address                string `yaml:"address"`
 	Port                   int    `yaml:"port"`
 	GracefulShutdownPeriod int    `yaml:"gracefulShutdownPeriod"`
-	JWTSecret              string `yaml:"jwtSecret"`
+	JwtKeyPath             string `yaml:"jwtKeyPath"`
 }
 
 type DBConfig struct {

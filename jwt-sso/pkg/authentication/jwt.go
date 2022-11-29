@@ -18,8 +18,9 @@ const (
 )
 
 type CustomClaims struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID    uint   `json:"id"`
+	Name  string `json:"name"`
+	Email string `json:"email"`
 	jwt.RegisteredClaims
 }
 
@@ -67,6 +68,7 @@ func (s *JWTService) CreateToken(user *model.User) (string, error) {
 		jwt.SigningMethodRS256,
 		CustomClaims{
 			Name:             user.Name,
+			Email:            user.Email,
 			ID:               user.ID,
 			RegisteredClaims: c,
 		},
@@ -89,8 +91,9 @@ func (s *JWTService) ParseToken(tokenString string) (*model.User, error) {
 	}
 
 	user := &model.User{
-		ID:   claims.ID,
-		Name: claims.Name,
+		ID:    claims.ID,
+		Email: claims.Email,
+		Name:  claims.Name,
 	}
 
 	return user, nil

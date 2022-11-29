@@ -21,7 +21,7 @@ import (
 )
 
 func New(conf *config.Config, logger *logrus.Logger) (*Server, error) {
-	jwtService := authentication.NewJWTService(conf.Server.JWTSecret)
+	jwtService := authentication.NewJWTService(conf.Server.JwtKeyPath)
 
 	authController := controller.NewAuthController(jwtService)
 	gin.SetMode(conf.Server.ENV)
