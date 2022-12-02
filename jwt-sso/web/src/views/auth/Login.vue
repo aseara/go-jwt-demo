@@ -10,23 +10,15 @@
         <div v-if="showLogin">
             <el-form ref="loginFormRef" :model="loginUser" size="large" :rules="rules" show-message>
               <el-form-item prop="name">
-                <el-input v-model="loginUser.name" placeholder="admin">
+                <el-input v-model="loginUser.name" placeholder="jwt-admin">
                   <template #prefix>
                     <User />
                   </template>
                 </el-input>
               </el-form-item>
 
-              <el-form-item prop="password">
-                <el-input v-model="loginUser.password" type="password" placeholder="123456" show-password>
-                  <template #prefix>
-                    <Lock />
-                  </template>
-                </el-input>
-              </el-form-item>
-
-              <el-form-item prop="redirectUrl">
-                <el-input v-model="loginUser.redirectUrl" placeholder="http://grafana4444.mh3cloud.cn/login">
+              <el-form-item prop="email">
+                <el-input v-model="loginUser.email" placeholder="admin@163.com">
                   <template #prefix>
                     <Lock />
                   </template>
@@ -87,10 +79,11 @@ const showLogin = ref(true);
 
 const anonymousLogin = ref(false);
 
+// const returnUrl = this.$router.query.ReturnUrl;
+
 const loginUser = reactive({
-  name: "admin",
-  password: "123456",
-  redirectUrl: "http://grafana5555.mh3cloud.cn/login/"
+  name: "jwt-admin",
+  email: "admin@163.com",
 });
 
 const registerUser = reactive({
@@ -130,9 +123,7 @@ const login = async (form) => {
           showClose: true,
           duration: 1500,
         })
-    // router.push('/');
-    // router.go("https://grafana.mh3cloud.cn/login")
-    window.location.href = data.data.url;
+    window.location.href = "https://jwt-grafana.mh3cloud.cn/?orgId=1";
   }
 
   if (anonymousLogin.value) {
@@ -146,8 +137,7 @@ const login = async (form) => {
     if (valid) {
       request.post("/api/v1/auth/token", {
         name: loginUser.name,
-        password: loginUser.password,
-        returnUrl: loginUser.redirectUrl,
+        email: loginUser.email,
         setCookie: true,
       }).then((response) => {
         success(response.data)

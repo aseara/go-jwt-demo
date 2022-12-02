@@ -92,7 +92,6 @@ func (s *Server) initRouter() {
 
 	// register non-resource routers
 	root.GET("/index", controller.Index)
-	root.GET("/api/v1/auth/token", s.auth.GetToken)
 
 	api := root.Group("/api/v1")
 	controllers := make([]string, 0, 1)

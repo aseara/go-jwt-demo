@@ -7,6 +7,6 @@ const (
 	RequestInfoContextKey  = `requestInfo`
 	KubeResourceContextKey = `kubeResource`
 
-	CookieTokenName = `token`
+	CookieTokenName = `jwt-token`
 	CookieLoginUser = `loginUser`
 )

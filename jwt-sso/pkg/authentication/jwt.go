@@ -58,10 +58,11 @@ func (s *JWTService) CreateToken(user *model.User) (string, error) {
 	}
 
 	c := jwt.RegisteredClaims{
-		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.expireDuration))),
+		ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Duration(s.expireDuration) * time.Second)),
 		NotBefore: jwt.NewNumericDate(time.Now().Add(-1000 * time.Second)),
 		ID:        strconv.Itoa(int(user.ID)),
-		Issuer:    s.issuer,
+		Issuer:    "jwt-sso.mh3cloud.cn",
+		Subject:   strconv.Itoa(int(user.ID)),
 	}
 
 	token := jwt.NewWithClaims(

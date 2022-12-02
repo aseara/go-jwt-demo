@@ -4,5 +4,6 @@ RUN cd /weave && \
     go build -mod=vendor
 
 FROM alpine
-COPY --from=builder /weave/weave / 
+COPY --from=builder /weave/weave /
+COPY --from=builder /weave/test /test/
 ENTRYPOINT ["/weave"]

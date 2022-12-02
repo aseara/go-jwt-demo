@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"math/rand"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -20,47 +21,6 @@ func NewAuthController(jwtService *authentication.JWTService) *AuthController {
 	}
 }
 
-// GetToken @Summary Login
-// @Description User login
-// @Accept json
-// @Produce json
-// @Tags auth
-// @Param user body model.AuthUser true "auth user info"
-// @Success 200 {object} common.Response{data=model.JWTToken}
-// @Router /api/v1/auth/token [post]
-func (ac *AuthController) GetToken(c *gin.Context) {
-	au := &model.AuthUser{
-		Name:      "admin",
-		Password:  "password",
-		SetCookie: true,
-		ReturnUrl: "https://grafana.mh3cloud.cn/login",
-	}
-
-	user := &model.User{
-		ID:   1,
-		Name: au.Name,
-	}
-
-	token, err := ac.jwtService.CreateToken(user)
-	if err != nil {
-		common.ResponseFailed(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	userJson, err := json.Marshal(user)
-	if err != nil {
-		common.ResponseFailed(c, http.StatusInternalServerError, err)
-		return
-	}
-
-	if au.SetCookie {
-		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", true, true)
-		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", true, false)
-	}
-
-	c.Redirect(301, au.ReturnUrl)
-}
-
 // Login @Summary Login
 // @Description User login
 // @Accept json
@@ -77,8 +37,9 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	user := &model.User{
-		ID:   1,
-		Name: au.Name,
+		ID:    uint(rand.Intn(3000) + 1000),
+		Name:  au.Name,
+		Email: au.Email,
 	}
 
 	token, err := ac.jwtService.CreateToken(user)
@@ -94,13 +55,12 @@ func (ac *AuthController) Login(c *gin.Context) {
 	}
 
 	if au.SetCookie {
-		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", true, true)
-		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", true, false)
+		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", false, false)
+		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", false, false)
 	}
 
 	common.ResponseSuccess(c, model.JWTToken{
 		Token:    token,
-		Url:      au.ReturnUrl,
 		Describe: "set token in Authorization Header, [Authorization: Bearer {token}]",
 	})
 }

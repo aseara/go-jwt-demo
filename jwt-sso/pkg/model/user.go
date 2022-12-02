@@ -87,11 +87,10 @@ func (u *UpdatedUser) GetUser() *User {
 
 type AuthUser struct {
 	Name      string `json:"name"`
-	Password  string `json:"password"`
+	Email     string `json:"email"`
 	SetCookie bool   `json:"setCookie"`
 	AuthType  string `json:"authType"`
 	AuthCode  string `json:"authCode"`
-	ReturnUrl string `json:"returnUrl"`
 }
 
 type UserRole struct {

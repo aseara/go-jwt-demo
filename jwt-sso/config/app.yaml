@@ -12,7 +12,7 @@ server:
       burst: 50
       qps: 10
       cacheSize: 2048
-  jwtKeyPath: /test/
+  jwtKeyPath: test/
 
 docker:
   enable: false # enable docker, start dockerd at first
