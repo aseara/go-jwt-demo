@@ -1,7 +1,6 @@
 package controller
 
 import (
-	"encoding/json"
 	"math/rand"
 	"net/http"
 
@@ -48,15 +47,8 @@ func (ac *AuthController) Login(c *gin.Context) {
 		return
 	}
 
-	userJson, err := json.Marshal(user)
-	if err != nil {
-		common.ResponseFailed(c, http.StatusInternalServerError, err)
-		return
-	}
-
 	if au.SetCookie {
 		c.SetCookie(common.CookieTokenName, token, 3600*24, "/", "mh3cloud.cn", false, false)
-		c.SetCookie(common.CookieLoginUser, string(userJson), 3600*24, "/", "mh3cloud.cn", false, false)
 	}
 
 	common.ResponseSuccess(c, model.JWTToken{
