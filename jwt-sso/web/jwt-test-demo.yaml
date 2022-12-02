@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jwt-test-demo
+  namespace: jwt-test
+  labels:
+    app: jwt-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jwt-test
+  template:
+    metadata:
+      labels:
+        app: jwt-test
+    spec:
+      containers:
+      - name: fe
+        image: registry.cn-shanghai.aliyuncs.com/k8smigu/traefik-jwt-test-fe:0.0.1
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 80
+      - name: be
+        image: registry.cn-shanghai.aliyuncs.com/k8smigu/traefik-jwt-test-be:0.0.1
+        imagePullPolicy: Always
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: jwt-test-svc
+  namespace: jwt-test
+  labels:
+    app: jwt-test
+spec:
+  selector:
+    app: jwt-test
+  ports:
+  - name: default
+    protocol: TCP
+    port: 80
+    targetPort: 80
+    
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jwt-test-ingress
+  namespace: jwt-test
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: 'true'
+spec:
+  tls:
+    - hosts:
+        - jwt-sso.mh3cloud.cn
+      secretName: grafana.mh3cloud.cn-tls
+  rules:
+    - host: jwt-sso.mh3cloud.cn
+      http:
+        paths:
+          - path: /
+            pathType: ImplementationSpecific
+            backend:
+              service:
+                name: jwt-test-svc
+                port:
+                  number: 80

@@ -6,4 +6,5 @@ RUN cd /weave && \
 FROM alpine
 COPY --from=builder /weave/weave /
 COPY --from=builder /weave/test /test/
+COPY --from=builder /weave/config /config/
 ENTRYPOINT ["/weave"]
